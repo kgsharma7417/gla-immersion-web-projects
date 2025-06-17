@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Product Search & Listing</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f7f7f7;
+    }
+    h2 {
+
+      margin-bottom: 10px;
+    }
+    #searchForm {
+      margin-bottom: 20px;
+    }
+    input[type="text"] {
+      padding: 10px;
+      width: 250px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      padding: 10px 15px;
+      margin-left: 5px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    select {
+      padding: 10px;
+      margin-left: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .error {
+      color: red;
+      margin-top: 5px;
+    }
+    .products {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+    }
+    .product-card {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .product-card img {
+      width: 100%;
+      max-height: 150px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+    .product-name {
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .product-title {
+      font-size: 0.9em;
+      color: #555;
+    }
+    .product-price {
+      margin-top: 5px;
+      color: green;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Search Products</h2>
+  <form id="searchForm">
+    <input type="text" id="searchInput" placeholder="Enter product name..." />
+    <button type="submit">Search</button>
+    <select id="sortSelect">
+      <option value="">Sort by Price</option>
+      <option value="asc">Price: Low to High</option>
+      <option value="desc">Price: High to Low</option>
+    </select>
+    <div class="error" id="errorMsg"></div>
+  </form>
+
+  <div class="products" id="productList"></div>
+
+  <script>
+    const productList = document.getElementById('productList');
+    const searchForm = document.getElementById('searchForm');
+    const searchInput = document.getElementById('searchInput');
+    const errorMsg = document.getElementById('errorMsg');
+    const sortSelect = document.getElementById('sortSelect');
+
+    let currentProducts = [];
+
+    async function loadProducts(url) {
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        currentProducts = data.products || [];
+        applySortingAndDisplay();
+      } catch (error) {
+        productList.innerHTML = "<p>Error loading products.</p>";
+      }
+    }
+
+    function applySortingAndDisplay() {
+      let sortedProducts = [...currentProducts];
+      const sortValue = sortSelect.value;
+
+      if (sortValue === 'asc') {
+        sortedProducts.sort((a, b) => a.price - b.price);
+      } else if (sortValue === 'desc') {
+        sortedProducts.sort((a, b) => b.price - a.price);
+      }
+
+      displayProducts(sortedProducts);
+    }
+
+    function displayProducts(products) {
+      productList.innerHTML = "";
+      if (products.length === 0) {
+        productList.innerHTML = "<p>No products found.</p>";
+        return;
+      }
+
+      products.forEach(product => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.innerHTML = `
+          <img src="${product.thumbnail}" alt="${product.name}" />
+          <div class="product-name">${product.brand}</div>
+          <div class="product-title">${product.title}</div>
+          <div class="product-price">₹${product.price}</div>
+        `;
+        productList.appendChild(card);
+      });
+    }
+
+    searchForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const query = searchInput.value.trim();
+
+      if (!query) {
+        errorMsg.textContent = "Please enter a product name to search.";
+        return;
+      }
+
+      errorMsg.textContent = "";
+      await loadProducts(`https://dummyjson.com/products/search?q=${encodeURIComponent(query)}`);
+    });
+
+    sortSelect.addEventListener('change', applySortingAndDisplay);
+
+    loadProducts('https://dummyjson.com/products');
+  </script>
+
+</body>
+</html>
